@@ -2,6 +2,8 @@ function AI(grid) {
   this.grid          = grid;
   this.realData      = [];
   this.possibleMoves = [];
+  this.hFlip         = false;
+  this.hrFlip        = false;
 }
 
 
@@ -16,6 +18,22 @@ function AI(grid) {
  */
 AI.prototype.getDirection = function() {
   this.realData = this.gridToData(this.grid);
+/*
+  this.hrFlip = false;
+  var flowMap = this.defaultFlowMap();
+  var realValues = this.dataToFlowValues(this.realData, flowMap);
+  var realScore = this.arraySum(realValues);
+  var flipData = this.gridTransformHorizontal(this.realData);
+  flipData = this.gridTransformRotate(flipData);
+  var flipValues = this.dataToFlowValues(flipData, flowMap);
+  var flipScore = this.arraySum(flipValues);
+
+  if (flipScore > realScore * 2 || this.arrayCount(this.realData, 0) > 8) {
+//console.log('flipScore'+flipScore+' realScore'+realScore);
+    this.realData = flipData;
+    this.hrFlip = true;
+  }
+*/
   this.findPossibleMoves();
   if (this.possibleMoves.length == 0) {
 
@@ -326,16 +344,62 @@ AI.prototype.gridToData = function(grid) {
 }
 
 /**
+ * Flip data grid array horizontally
+ */
+AI.prototype.gridTransformHorizontal = function(data) {
+  var out = [];
+  for (var i in data) {
+    var r = (i%4) * 2;
+    var h = i - r + 3;
+    out[h] = data[i];
+  }
+  return out;
+}
+
+/**
+ * Flip data grid array vertically
+ */
+AI.prototype.gridTransformVertical = function(data) {
+  var out = [];
+  for (var i in data) {
+    var r = (i%4) * 2;
+    var v = r - i + 12;
+    out[v] = data[i];
+  }
+  return out;
+}
+
+/**
+ * Flip data grid array counterclockwise
+ */
+AI.prototype.gridTransformRotate = function(data) {
+  var out = [];
+  for (var i in data) {
+    var r = (i%4) * 4.25;
+    var v = (i*.25) - r + 12;
+    out[v] = data[i];
+  }
+  return out;
+}
+
+/**
  * Converts internal vector value to GC's direction
  */
 AI.prototype.vToDirection = function(v) {
   var out = -1;
   var map = [ -4, 1, 4, -1 ]; // Cirulli's up, right, down, left
+  if (this.hFlip && Math.abs(v) <= 1) {
+    v = -v;
+  }
+  if (this.hrFlip) {
+    var map = [ -1, 4, 1, -4 ];
+  }
   for ( var i in map) {
     if (map[i] == v) {
       out = i;
     }
   }
+
   return out;
 }
 
@@ -369,4 +433,15 @@ AI.prototype.arrayReplace = function(data, val, replaceVal) {
     }
   }
   return data;
+}
+
+/**
+ * Sums values in array
+ */
+AI.prototype.arraySum = function(data) {
+  var total = 0;
+  for (var i in data) {
+    total += data[i];
+  }
+  return total;
 }
