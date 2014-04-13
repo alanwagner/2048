@@ -68,7 +68,7 @@ AI.prototype.findPossibleMoves = function() {
 
   var i = 0;
   //  loop over growing list of possible moves (in effect, recursively)
-  while (i < this.possibleMoves.length && i<=100) {
+  while (i < this.possibleMoves.length && i<=20) {
     var move = this.possibleMoves[i];
     i++;
     if (move.countOpen >= 13) {
