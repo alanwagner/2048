@@ -3,8 +3,16 @@ function HTMLActuator() {
   this.scoreContainer   = document.querySelector(".score-container");
   this.bestContainer    = document.querySelector(".best-container");
   this.messageContainer = document.querySelector(".game-message");
+  this.aiHintContainer  = document.querySelector(".ai-hint");
 
   this.score = 0;
+}
+
+HTMLActuator.prototype.displayAiHint = function (text) {
+  this.aiHintContainer.innerHTML = text;
+}
+HTMLActuator.prototype.clearAiHint = function () {
+  this.aiHintContainer.innerHTML = '';
 }
 
 HTMLActuator.prototype.actuate = function (grid, metadata) {

@@ -5,10 +5,18 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.actuator       = new Actuator;
 
   this.startTiles     = 2;
+  this.aiHintDirection = -1;
+  this.aiGameStates    = [];
+  this.aiRunning       = false;
 
   this.inputManager.on("move", this.move.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
   this.inputManager.on("keepPlaying", this.keepPlaying.bind(this));
+
+  this.inputManager.on("aiAuto", this.aiAuto.bind(this));
+  this.inputManager.on("aiBack", this.aiBack.bind(this));
+  this.inputManager.on("aiStep", this.aiStep.bind(this));
+  this.inputManager.on("aiHint", this.aiHint.bind(this));
 
   this.setup();
 }
@@ -40,7 +48,7 @@ GameManager.prototype.setup = function () {
   var previousState = this.storageManager.getGameState();
 
   // Reload the game from a previous game if present
-  if (previousState) {
+  if (previousState && window.location.search == '') {
     this.grid        = new Grid(previousState.grid.size,
                                 previousState.grid.cells); // Reload grid
     this.score       = previousState.score;
@@ -56,7 +64,10 @@ GameManager.prototype.setup = function () {
 
     // Add the initial tiles
     this.addStartTiles();
+
   }
+
+  this.ai           = new AI(this.grid);
 
   // Update the actuator
   this.actuate();
@@ -64,8 +75,12 @@ GameManager.prototype.setup = function () {
 
 // Set up the initial tiles to start the game with
 GameManager.prototype.addStartTiles = function () {
-  for (var i = 0; i < this.startTiles; i++) {
-    this.addRandomTile();
+  if (window.location.search != '') {
+    this.setGridFromString(window.location.search.substring(1));
+  } else {
+    for (var i = 0; i < this.startTiles; i++) {
+      this.addRandomTile();
+    }
   }
 };
 
@@ -92,6 +107,8 @@ GameManager.prototype.actuate = function () {
     this.storageManager.setGameState(this.serialize());
   }
 
+  this.clearAiHint();
+  this.storeAiGameState();
   this.actuator.actuate(this.grid, {
     score:      this.score,
     over:       this.over,
@@ -273,4 +290,139 @@ GameManager.prototype.tileMatchesAvailable = function () {
 
 GameManager.prototype.positionsEqual = function (first, second) {
   return first.x === second.x && first.y === second.y;
+};
+
+//Get the arrow character entity representing the chosen direction
+GameManager.prototype.getArrow = function (direction) {
+
+//classic arrows
+var map = {
+  0: '&#x2191;',  // Up
+  1: '&#x2192;',  // Right
+  2: '&#x2193;',  // Down
+  3: '&#x2190;'   // Left
+};
+
+//triangles
+var map = {
+  0: '&#x25b2;',  // Up
+  1: '&#x25b6;',  // Right
+  2: '&#x25bc;',  // Down
+  3: '&#x25c0;'   // Left
+};
+
+//  pointing fingers
+var map = {
+  0: '&#x261d;',  // Up
+  1: '&#x261e;',  // Right
+  2: '&#x261f;',  // Down
+  3: '&#x261c;'   // Left
+};
+
+return map[direction];
+};
+
+//Get the cell value for a given hex value
+GameManager.prototype.codeToValue = function (code) {
+  var pow = parseInt(code,16);
+  return Math.pow(2, pow);
+}
+
+//Get the hex value for a given cell value
+GameManager.prototype.valueToCode = function (val) {
+  var out = '0';
+  if (val > 0) {
+    var log = Math.log(val) / Math.LN2;
+    out = log.toString(16);
+  }
+  return out;
+}
+
+GameManager.prototype.setGridFromString = function(gridStr) {
+  for (var i = 0; i < gridStr.length; i++) {
+    var value = this.codeToValue(gridStr.substr(i,1));
+    var tile = new Tile({x: (i-i%4)/4, y: i%4 }, value);
+    if (value > 1) {
+      this.grid.insertTile(tile);
+    } else {
+      this.grid.removeTile(tile);
+    }
+  }
+}
+
+GameManager.prototype.getStringFromGrid = function(grid) {
+  var out = '';
+  grid.eachCell(function (x, y, tile) {
+    if (tile) {
+      var log = Math.log(tile.value) / Math.LN2;
+      out += log.toString(16);
+    } else {
+      out += '0';
+    }
+  });
+  return out;
+}
+
+GameManager.prototype.storeAiGameState = function() {
+  var state = this.getStringFromGrid(this.grid);
+  this.aiGameStates.push(state);
+}
+
+GameManager.prototype.clearAiHint = function() {
+  this.aiHintDirection = -1;
+  this.actuator.clearAiHint();
+}
+
+GameManager.prototype.getAiDirection = function() {
+  var direction = this.aiHintDirection;
+  if (direction == -1) {
+    direction = this.ai.getDirection();
+  }
+  return direction;
+}
+GameManager.prototype.doAiAuto = function() {
+  if (this.over) {
+    this.aiAutoRunning = false;
+  }
+  if (this.aiAutoRunning) {
+    var direction = this.getAiDirection();
+    this.move(direction);
+    var self = this;
+    setTimeout(function(){ self.doAiAuto(); }, 10);
+  }
+}
+
+GameManager.prototype.aiAuto = function () {
+  if (! this.aiAutoRunning) {
+    this.aiAutoRunning = true;
+    this.doAiAuto();
+  } else {
+    this.aiAutoRunning = false;
+  }
+};
+
+GameManager.prototype.aiBack = function () {
+  if (this.aiGameStates.length < 2) {
+    return null;
+  }
+  var currState = this.aiGameStates.pop();
+  var prevState = this.aiGameStates.pop();
+  this.setGridFromString(prevState);
+  this.over = false;
+  this.actuator.continueGame();
+  this.actuate();
+};
+
+GameManager.prototype.aiStep = function () {
+  this.aiAutoRunning = false;
+  var direction = this.getAiDirection();
+  this.move(direction);
+  this.aiHint();
+};
+
+GameManager.prototype.aiHint= function () {
+  this.aiAutoRunning = false;
+  var direction = this.ai.getDirection();
+  this.aiHintDirection = direction;
+  this.actuator.displayAiHint(this.getArrow(direction));
 };

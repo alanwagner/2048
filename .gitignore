@@ -1,1 +1,4 @@
 .sass-cache/
+.buildpath
+.project
+.settings/

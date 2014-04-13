@@ -73,6 +73,11 @@ KeyboardInputManager.prototype.listen = function () {
   this.bindButtonPress(".restart-button", this.restart);
   this.bindButtonPress(".keep-playing-button", this.keepPlaying);
 
+  this.bindButtonPress(".ai-auto-button", this.aiAuto);
+  this.bindButtonPress(".ai-back-button", this.aiBack);
+  this.bindButtonPress(".ai-hint-button", this.aiHint);
+  this.bindButtonPress(".ai-step-button", this.aiStep);
+
   // Respond to swipe events
   var touchStartClientX, touchStartClientY;
   var gameContainer = document.getElementsByClassName("game-container")[0];
@@ -135,6 +140,26 @@ KeyboardInputManager.prototype.restart = function (event) {
 KeyboardInputManager.prototype.keepPlaying = function (event) {
   event.preventDefault();
   this.emit("keepPlaying");
+};
+
+KeyboardInputManager.prototype.aiAuto = function (event) {
+  event.preventDefault();
+  this.emit("aiAuto");
+};
+
+KeyboardInputManager.prototype.aiBack = function (event) {
+  event.preventDefault();
+  this.emit("aiBack");
+};
+
+KeyboardInputManager.prototype.aiStep = function (event) {
+  event.preventDefault();
+  this.emit("aiStep");
+};
+
+KeyboardInputManager.prototype.aiHint = function (event) {
+  event.preventDefault();
+  this.emit("aiHint");
 };
 
 KeyboardInputManager.prototype.bindButtonPress = function (selector, fn) {

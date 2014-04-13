@@ -181,6 +181,7 @@ hr {
     .game-container .game-message .lower {
       display: block;
       margin-top: 59px; }
+    .ai-controls  a,
     .game-container .game-message a {
       display: inline-block;
       background: #8f7a66;
@@ -709,3 +710,18 @@ hr {
     margin-top: 90px !important; }
   .game-message .lower {
     margin-top: 30px !important; } }
+
+
+.ai-hint {
+  display: inline-block;
+  position: relative;
+  top: 10px;
+  font-size: 200%;
+  height: 24px;
+  line-height: 36px;
+  font-weight: bold;
+  margin-left: 20px; }
+
+h1.title  span {
+  font-size:  80%;
+}
