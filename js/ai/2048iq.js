@@ -195,7 +195,7 @@ AI.prototype.defaultFlowMap = function() {
 }
 
 AI.prototype.defaultCellPriorityList = function() {
-  var out = [15,14,13,12,9,8,5,4,10,6,0,11,1,2,7,3];
+  var out = [15,14,13,12,8,4,9,0,5,10,1,6,11,2,7,3];
   return out;
 }
 
