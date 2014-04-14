@@ -138,13 +138,13 @@ AI.prototype.chooseBestMove = function() {
 
   var realFlowValues = this.dataToFlowValues(this.realData, flowMap);
   var cpList = this.defaultCellPriorityList();
-/*
-  if ((realFlowValues[8] < -16 || realFlowValues[9] < -16) && realFlowValues[15] >= 64) {
+
+  if ((realFlowValues[8] < -8 || realFlowValues[9] < -16 || realFlowValues[12] < -16) && realFlowValues[15] >= 64) {
     flowMap = this.altFlowMap();
     cpList = this.altCellPriorityList();
     realFlowValues = this.dataToFlowValues(this.realData, flowMap);
   }
-*/
+
   var cpIdx = 0;
 
   while (candMoves.length > 1 && cpIdx < cpList.length) {
@@ -247,24 +247,24 @@ AI.prototype.altFlowMap = function() {
     14: 15,
     13: 14,
     12: 13,
-    11: 10,
-    10:  9,
-     9: 13,
-     8:  9,
+    11: 15,
+    10: 11,
+     9: 10,
+     8: 12,
      7: 11,
-     6: 10,
-     5:  9,
-     4:  8,
+     6:  7,
+     5:  6,
+     4:  5,
      3:  7,
-     2:  6,
-     1:  5,
-     0:  4
+     2:  3,
+     1:  2,
+     0:  1
   };
   return flowMap;
 }
 
 AI.prototype.altCellPriorityList = function() {
-  var out = [15,14,13,12,9,8,10,5,4,0,11,6,1,7,2,3];
+  var out = [15,14,13,12,9,8,11,10];
   return out;
 }
 
