@@ -7,6 +7,7 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.startTiles     = 2;
   this.aiHintDirection = -1;
   this.aiGameStates    = [];
+  this.aiGameStateIdx  = -1;
   this.aiRunning       = false;
 
   this.inputManager.on("move", this.move.bind(this));
@@ -24,6 +25,8 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
 // Restart the game
 GameManager.prototype.restart = function () {
   this.storageManager.clearGameState();
+  this.aiGameStates    = [];
+  this.aiGameStateIdx  = -1;
   this.actuator.continueGame(); // Clear the game won/lost message
   this.setup();
 };
@@ -207,6 +210,10 @@ GameManager.prototype.move = function (direction) {
       this.over = true; // Game over!
     }
 
+    if (this.aiGameStateIdx < this.aiGameStates.length - 1) {
+      this.aiGameStates = this.aiGameStates.slice(0, this.aiGameStateIdx+1);
+    }
+
     this.actuate();
   }
 };
@@ -364,8 +371,11 @@ GameManager.prototype.getStringFromGrid = function(grid) {
 }
 
 GameManager.prototype.storeAiGameState = function() {
-  var state = this.getStringFromGrid(this.grid);
-  this.aiGameStates.push(state);
+  if (this.aiGameStateIdx == this.aiGameStates.length - 1) {
+    var state = this.getStringFromGrid(this.grid);
+    this.aiGameStates.push(state);
+    this.aiGameStateIdx ++;
+  }
 }
 
 GameManager.prototype.clearAiHint = function() {
@@ -402,11 +412,11 @@ GameManager.prototype.aiAuto = function () {
 };
 
 GameManager.prototype.aiBack = function () {
-  if (this.aiGameStates.length < 2) {
+  if (this.aiGameStates.length < 2 || this.aiGameStateIdx < 1) {
     return null;
   }
-  var currState = this.aiGameStates.pop();
-  var prevState = this.aiGameStates.pop();
+  this.aiGameStateIdx --;
+  var prevState = this.aiGameStates[this.aiGameStateIdx];
   this.setGridFromString(prevState);
   this.over = false;
   this.actuator.continueGame();
@@ -415,9 +425,17 @@ GameManager.prototype.aiBack = function () {
 
 GameManager.prototype.aiStep = function () {
   this.aiAutoRunning = false;
-  var direction = this.getAiDirection();
-  this.move(direction);
-  this.aiHint();
+  if (this.aiGameStateIdx < this.aiGameStates.length - 1) {
+    var nextState = this.aiGameStates[this.aiGameStateIdx+1];
+    this.setGridFromString(nextState);
+    this.actuate();
+    this.aiGameStateIdx ++;
+    this.aiHint();
+  } else {
+    var direction = this.getAiDirection();
+    this.move(direction);
+    this.aiHint();
+  }
 };
 
 GameManager.prototype.aiHint= function () {
