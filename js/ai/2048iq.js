@@ -75,6 +75,10 @@ AI.prototype.findPossibleMoves = function() {
       });
     }
   }
+  if (data[15]<=8) {
+    //  don't get lost checking merges if anchor isn't set
+    return this.possibleMoves.length > 0;
+  }
 
   if (this.possibleMoves.length < 2) {
 
