@@ -21,13 +21,14 @@ AI.prototype.getDirection = function() {
 
   var bestI = this.gridTransform;
   var realData = this.gridTransformMultiple(this.realData, this.gridTransform);
+  var realSum = this.arraySum(realData);
   var flowMap = this.defaultFlowMap();
   var realValues = this.dataToFlowValues(realData, flowMap);
   var realScore = this.arraySum(realValues);
 
-  if (this.gridTransform == -1 || realScore < -500) {
+  if (this.gridTransform == -1 || realScore < (-realSum)/1.5) {
     var bestScore = realScore;
-    var testScore = realScore + (this.arraySum(realData) / 20);
+    var testScore = realScore + (realSum / 20);
 
     for (var i = 0; i <= 7; i++) {
       flipData = this.gridTransformMultiple(this.realData, i);
@@ -218,15 +219,15 @@ AI.prototype.chooseBestMove = function() {
     cpIdx ++;
   }
 
-  //  if no clear winner based on flow map, choose the one with the fewest 2s
+  //  if no clear winner based on flow map, choose the one with most open cells
 
   if (candMoves.length > 1) {
-    var bestScore = 16;
+    var bestScore = -1;
     var bestMove = null;
     for (var i in candMoves) {
       var move = candMoves[i];
-      var score = this.arrayCount(move.data, 2);
-      if (score < bestScore) {
+      var score = this.arrayCount(move.data, 0);
+      if (score > bestScore) {
         bestScore = score;
         bestMove = move;
       }
