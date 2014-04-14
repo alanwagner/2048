@@ -75,10 +75,6 @@ AI.prototype.findPossibleMoves = function() {
       });
     }
   }
-  if (data[15]<=8) {
-    //  don't get lost checking merges if anchor isn't set
-    return this.possibleMoves.length > 0;
-  }
 
   if (this.possibleMoves.length < 2) {
 
@@ -138,6 +134,24 @@ AI.prototype.chooseBestMove = function() {
       data       : this.arrayCopy(move.data),
       flowValues : this.dataToFlowValues(move.data, flowMap)
     });
+  }
+
+  //  first check: does any move change the number of gold tiles?
+  var winners = [];
+  var realSum = this.arraySum(this.realData);
+  if (realSum > 2000) {
+    var realCountGoldTiles = this.arrayCountGreaterThan(this.realData, 64);
+    for (var i in candMoves) {
+      var move = candMoves[i];
+      var countGoldTiles = this.arrayCountGreaterThan(move.data, 64);
+      if (countGoldTiles != realCountGoldTiles) {
+        winners.push(move);
+      }
+    }
+    if (winners.length > 0 && winners.length != candMoves.length) {
+      console.log('goldTiles');
+      candMoves = winners;
+    }
   }
 
   var realFlowValues = this.dataToFlowValues(this.realData, flowMap);
@@ -472,6 +486,19 @@ AI.prototype.arrayCount = function(data, val) {
   var count = 0;
   for (var i in data) {
     if (val == data[i]) {
+      count++;
+    }
+  }
+  return count;
+}
+
+/**
+ * Counts elements greater than value in array
+ */
+AI.prototype.arrayCountGreaterThan = function(data, val) {
+  var count = 0;
+  for (var i in data) {
+    if (val < data[i]) {
       count++;
     }
   }
