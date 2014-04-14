@@ -2,8 +2,7 @@ function AI(grid) {
   this.grid          = grid;
   this.realData      = [];
   this.possibleMoves = [];
-  this.hFlip         = false;
-  this.hrFlip        = false;
+  this.gridTransform = -1; //  bitmask of h=1,v=2,r=4
 }
 
 
@@ -18,22 +17,35 @@ function AI(grid) {
  */
 AI.prototype.getDirection = function() {
   this.realData = this.gridToData(this.grid);
-/*
-  this.hrFlip = false;
-  var flowMap = this.defaultFlowMap();
-  var realValues = this.dataToFlowValues(this.realData, flowMap);
-  var realScore = this.arraySum(realValues);
-  var flipData = this.gridTransformHorizontal(this.realData);
-  flipData = this.gridTransformRotate(flipData);
-  var flipValues = this.dataToFlowValues(flipData, flowMap);
-  var flipScore = this.arraySum(flipValues);
+  var realSum = this.arraySum(this.realData);
 
-  if (flipScore > realScore * 2 || this.arrayCount(this.realData, 0) > 8) {
-//console.log('flipScore'+flipScore+' realScore'+realScore);
-    this.realData = flipData;
-    this.hrFlip = true;
+  var bestI = this.gridTransform;
+  var realData = this.gridTransformMultiple(this.realData, this.gridTransform);
+  var flowMap = this.defaultFlowMap();
+  var realValues = this.dataToFlowValues(realData, flowMap);
+  var realScore = this.arraySum(realValues);
+
+  if (this.gridTransform == -1 || realScore < -500) {
+    var bestScore = realScore;
+    var testScore = realScore + (this.arraySum(realData) / 20);
+
+    for (var i = 0; i <= 7; i++) {
+      flipData = this.gridTransformMultiple(this.realData, i);
+      var flipValues = this.dataToFlowValues(flipData, flowMap);
+      var flipScore = this.arraySum(flipValues);
+      if (flipScore > bestScore && flipScore > testScore) {
+        bestScore = flipScore;
+        bestI = i;
+      }
+    }
   }
-*/
+  if (bestI != this.gridTransform) {
+    this.gridTransform = bestI;
+  }
+  if (this.gridTransform != 0) {
+    this.realData = this.gridTransformMultiple(this.realData, this.gridTransform);
+  }
+
   this.findPossibleMoves();
   if (this.possibleMoves.length == 0) {
 
@@ -74,6 +86,10 @@ AI.prototype.findPossibleMoves = function() {
         countOpen : countOpen
       });
     }
+  }
+  if (data[15]<=8) {
+    //  don't get lost checking merges if anchor isn't set
+    return this.possibleMoves.length > 0;
   }
 
   if (this.possibleMoves.length < 2) {
@@ -137,6 +153,7 @@ AI.prototype.chooseBestMove = function() {
   }
 
   //  first check: does any move change the number of gold tiles?
+  /*
   var winners = [];
   var realSum = this.arraySum(this.realData);
   if (realSum > 2000) {
@@ -153,6 +170,7 @@ AI.prototype.chooseBestMove = function() {
       candMoves = winners;
     }
   }
+  */
 
   var realFlowValues = this.dataToFlowValues(this.realData, flowMap);
   var cpList = this.defaultCellPriorityList();
@@ -413,6 +431,24 @@ AI.prototype.gridToData = function(grid) {
 }
 
 /**
+ * Flip data grid array multiple ways
+ * i is a bitmask h=1,v=2,r=4
+ */
+AI.prototype.gridTransformMultiple = function(data, i) {
+  var out = this.arrayCopy(data);
+  if (i>=4) {
+    out = this.gridTransformRotate(out);
+  }
+  if (i%4 >1) {
+    out = this.gridTransformVertical(out);
+  }
+  if (i%2 == 1) {
+    out = this.gridTransformHorizontal(out);
+  }
+  return out;
+}
+
+/**
  * Flip data grid array horizontally
  */
 AI.prototype.gridTransformHorizontal = function(data) {
@@ -457,16 +493,25 @@ AI.prototype.gridTransformRotate = function(data) {
 AI.prototype.vToDirection = function(v) {
   var out = -1;
   var map = [ -4, 1, 4, -1 ]; // Cirulli's up, right, down, left
-  if (this.hFlip && Math.abs(v) <= 1) {
+
+  //  if horizontal flip
+  if ((this.gridTransform % 2 == 1) && Math.abs(v) == 1) {
     v = -v;
   }
-  if (this.hrFlip) {
-    var map = [ -1, 4, 1, -4 ];
+  //  if vertical flip
+  if ((this.gridTransform % 4 >1) && Math.abs(v) == 4) {
+    v = -v;
   }
   for ( var i in map) {
     if (map[i] == v) {
       out = i;
     }
+  }
+
+  //  if rotation
+  if (this.gridTransform >= 4) {
+    out = parseInt(out) + 1;
+    out = out > 3 ? 0 : out;
   }
 
   return out;
