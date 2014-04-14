@@ -182,6 +182,22 @@ AI.prototype.chooseBestMove = function() {
     cpIdx ++;
   }
 
+  //  if no clear winner based on flow map, choose the one with the fewest 2s
+
+  if (candMoves.length > 1) {
+    var bestScore = 16;
+    var bestMove = null;
+    for (var i in candMoves) {
+      var move = candMoves[i];
+      var score = this.arrayCount(move.data, 2);
+      if (score < bestScore) {
+        bestScore = score;
+        bestMove = move;
+      }
+    }
+    candMoves[0] = bestMove;
+  }
+
   winner = candMoves[0];
 
   return winner.i;
@@ -220,7 +236,7 @@ AI.prototype.defaultFlowMap = function() {
 }
 
 AI.prototype.defaultCellPriorityList = function() {
-  var out = [15,14,13,12,8,4,9,0,5,10,1,6,11,2,7,3];
+  var out = [15,14,13,12,8,4,9,0,5,10,1];
   return out;
 }
 
