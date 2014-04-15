@@ -401,7 +401,7 @@ AI.prototype.gridHasVerticalMerges = function(data, lowerOnly) {
     //  if filled, find next non-zero cell down, if any
     var dy = 4;
     while ((i+dy) < 16 && data[i+dy] == 0) {
-      dy++;
+      dy+=4;
     }
     if ((i+dy) < 16 && data[i] == data[i+dy]) {
       out = true;
